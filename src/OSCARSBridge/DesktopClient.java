@@ -380,7 +380,7 @@ public class DesktopClient {
                     System.out.println(temp);
                     CtrlPlanePortContent[] ports = n.getPort();
                     for (CtrlPlanePortContent p : ports) {
-                        temp = p.getId()+" " +p.getCapacity()+ " "+p.getGranularity()+ " "+p.getMaximumReservableCapacity()+" "+p.getMaximumReservableCapacity();
+                        temp = p.getId()+" " +p.getCapacity()+ " "+p.getGranularity()+ " "+p.getMinimumReservableCapacity()+" "+p.getMaximumReservableCapacity();
                         System.out.println(temp);
                         CtrlPlaneLinkContent[] links = p.getLink();
                         if (links != null) {

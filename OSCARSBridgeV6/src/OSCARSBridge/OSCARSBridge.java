@@ -4,8 +4,18 @@ import net.es.oscars.api.soap.gen.v06.*;
 import net.es.oscars.client.OSCARSClient;
 import net.es.oscars.client.OSCARSClientConfig;
 import net.es.oscars.client.OSCARSClientException;
+import net.es.oscars.common.soap.gen.MessagePropertiesType;
 import net.es.oscars.common.soap.gen.OSCARSFaultMessage;
 import net.es.oscars.common.soap.gen.OSCARSFaultReport;
+import net.es.oscars.topoBridge.soap.gen.GetTopologyRequestType;
+import net.es.oscars.topoBridge.soap.gen.GetTopologyResponseType;
+import net.es.oscars.topoBridge.soap.gen.TopoBridgePortType;
+import net.es.oscars.topoBridge.soap.gen.TopoBridgePortTypeImpl;
+import net.es.oscars.topoBridge.soap.gen.TopoBridgeService;
+import net.es.oscars.utils.clients.TopoBridgeClient;
+
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import org.ogf.schema.network.topology.ctrlplane.*;
@@ -33,10 +43,10 @@ public class OSCARSBridge
     {    	
     	try
         {
-    		//Set up keystores 
+    		//Set up keystores -- Will have to change this per system -- might be able to rewrite to accept this info from MEICAN admin
     		OSCARSClientConfig.setClientKeystore("mykey", "/Users/jplante/OSCARS_HOME/sampleDomain/certs/client.jks", "changeit");
     		OSCARSClientConfig.setSSLKeyStore("/Users/jplante/OSCARS_HOME/sampleDomain/certs/oscars-ssl.jks", "changeit");
-    		
+    		    		
     		oscarsClient = new OSCARSClient(oscars_url);	// Connect to OSCARS
     		
     		return true;
@@ -51,7 +61,7 @@ public class OSCARSBridge
     		System.out.println("Exception thrown trying to initialize OSCARSClient");
     		e.printStackTrace();
     	}
-    	
+    	    	
     	return false;
     }
     
@@ -78,8 +88,6 @@ public class OSCARSBridge
     public ArrayList<String> createReservation(String description, String srcUrn, String isSrcTagged, String srcTag, String destUrn, String isDestTagged, String destTag, String path, int bandwidth, String pathSetupMode, long startTimestamp, long endTimestamp) 
     {       
         boolean hasEro = false;
-        //String repo = repoDir;							// NOT ENTIRELY SURE WHAT THIS VARIABLE IS FOR -- WAS USED IN SETUP IN v0.5
-
        	
     	/**
         * ResCreateContent					-->	GRI, Description
@@ -254,7 +262,6 @@ public class OSCARSBridge
     **************************************************************************/
     public ArrayList<String> queryReservation(String gri) 
     {
-    	//String repo = repoDir;							// NOT ENTIRELY SURE WHAT THIS VARIABLE IS FOR -- WAS USED IN SETUP IN v0.5
     	QueryResContent query = new QueryResContent();   	
     	query.setGlobalReservationId(gri);
     	
@@ -412,7 +419,6 @@ public class OSCARSBridge
     **************************************************************************/
     public ArrayList<String> cancelReservation(String gri) 
     {
-    	//String repo = repoDir;							// NOT ENTIRELY SURE WHAT THIS VARIABLE IS FOR -- WAS USED IN SETUP IN v0.5    
     	CancelResContent cancelRequest = new CancelResContent();   	
     	cancelRequest.setGlobalReservationId(gri);
     	
@@ -468,7 +474,6 @@ public class OSCARSBridge
     **************************************************************************/
     public ArrayList<String> listReservations(String grisString) 
     {
-    	//String repo = repoDir;							// NOT ENTIRELY SURE WHAT THIS VARIABLE IS FOR -- WAS USED IN SETUP IN v0.5  
     	String[] gris = grisString.split(";");     
     	
     	
@@ -509,7 +514,6 @@ public class OSCARSBridge
     **************************************************************************/
     public ArrayList<String> modifyReservation(String gri, long startTimestamp, long endTimestamp) 
     {
-    	//String repo = repoDir;							// NOT ENTIRELY SURE WHAT THIS VARIABLE IS FOR -- WAS USED IN SETUP IN v0.5  
     	ModifyResContent modifyRequest = new ModifyResContent();
     	UserRequestConstraintType userConstraints = new UserRequestConstraintType();
     	
@@ -570,8 +574,7 @@ public class OSCARSBridge
     * @return reply, String representation of OSCARSv0.6 createPath() response object.
     **************************************************************************/
     public ArrayList<String> createPath(String gri) 
-    {
-    	//String repo = repoDir;							// NOT ENTIRELY SURE WHAT THIS VARIABLE IS FOR -- WAS USED IN SETUP IN v0.5          
+    {        
         CreatePathContent createRequest = new CreatePathContent();
         createRequest.setGlobalReservationId(gri);
         
@@ -624,7 +627,6 @@ public class OSCARSBridge
     **************************************************************************/
     public ArrayList<String> teardownPath(String gri) 
     {
-    	//String repo = repoDir;							// NOT ENTIRELY SURE WHAT THIS VARIABLE IS FOR -- WAS USED IN SETUP IN v0.5 
     	TeardownPathContent teardownRequest = new TeardownPathContent();	
         teardownRequest.setGlobalReservationId(gri);
         
@@ -676,9 +678,7 @@ public class OSCARSBridge
     * NOTE: This isn't called anywhere in MEICAN presently, so may need to modify reply ArrayList to include Layer3Info and MplsInfo, and maybe add delimeters between GRIs.
     **************************************************************************/
     public ArrayList<String> listAllReservations(String status) 
-    {
-    	//String repo = repoDir;							// NOT ENTIRELY SURE WHAT THIS VARIABLE IS FOR -- WAS USED IN SETUP IN v0.5 
-                
+    {               
         ListRequest listRequest = new ListRequest();
         listRequest.getResStatus().add(status);				//Add status to list of statuses in ListRequest
         
@@ -765,8 +765,122 @@ public class OSCARSBridge
         return reply;
     }
     
+
+    /**************************************************************************
+    * Invokes a getTopology call in remote OSCARS.
+    * However, this function is NO LONGER SUPPORTED BY THE API!!!!!
+    * Therefore, must establish a  connection to the TopoBridge service client directly, and invoke the call there.
+    * @param topoBridge_url, address of TopoBridge wsdl
+    * @param topologyID, Domain ID of the desired topology
+    * @return reply, String representation of topology corresponding to domain with id = topologyID
+    **************************************************************************/
+    public ArrayList<String> getTopology(String topoBridge_url, String topologyID) 
+    {
+    	
+    	/* getTopology() no longer supported by API, must talk to TopoBridgeClient directly! */
+    	TopoBridgeClient topoBridge = null;
+    	
+    	try
+    	{
+    	  	topoBridge = TopoBridgeClient.getClient(topoBridge_url);
+    	}
+    	catch(Exception e)
+    	{ 
+    		System.out.println("Problem Connecting to TopoBridgeClient"); 
+    	}
+    	/**/
+    	
+    	GetTopologyRequestType topologyRequest = new GetTopologyRequestType();
+    	topologyRequest.getDomainId().add(topologyID);
+
+    	// This is necessary to prevent Null-Pointer Exception //
+    	MessagePropertiesType mt = new MessagePropertiesType();
+    	mt.setGlobalTransactionId("made-up");
+    	topologyRequest.setMessageProperties(mt);
+    	// //
+    	        
+        /* REQUEST CONSTRUCTION COMPLETE, EVERYTHING AFTER THIS INVOLVES GETTING RESPONSE FROM OSCARS */
+        ArrayList<String> reply = new ArrayList<String>();
+        String message;
+        String temp;
+        
+        /**
+         * GetTopologyResponseType					-->	List<CtrlPlaneTopologyContent>
+         * - CtrlPlaneTopologyContent				--> List<CtrlPlaneDomainContent>
+         * -- CtrlPlaneDomainContent				--> List<CtrlPlaneNodeContent>
+         * --- CtrlPlaneNodeContent					--> List<CtrlPlanePortContent>
+         * ---- CtrlPlanePortContent				--> List<CtrlPlaneLinkContent>, Port ID, Capacity, Granularity, Minimum Reservable Capacity, Maximum Reservable Capacity 
+         * ----- CtrlPlaneLinkContent				--> Link ID, Remote Link ID, Capacity, Granularity, Minimum Reservable Capacity, Maximum Reservable Capacity, VLAN Range
+         **/
+        GetTopologyResponseType topologyResponse;					//This is what comes back from OSCARS
+        List<CtrlPlaneTopologyContent> allTopologies;
+        List<CtrlPlaneDomainContent> allDomains;
+        List<CtrlPlaneNodeContent> allNodesInDomain;
+        List<CtrlPlanePortContent> allPortsOnNode;
+        List<CtrlPlaneLinkContent> allLinksOnPort;
+
+        try
+        {
+        	topologyResponse = topoBridge.getPortType().getTopology(topologyRequest);	// Submit getTopology request to OSCARS and get response back
+	        
+	        allTopologies = topologyResponse.getTopology();
+	        allDomains = allTopologies.get(0).getDomain();
+
+	        for (CtrlPlaneDomainContent oneDomain : allDomains) 
+	        {
+	        	temp = oneDomain.getId();
+	            reply.add(temp);
+	            
+	            allNodesInDomain = oneDomain.getNode();
+	            
+	            for (CtrlPlaneNodeContent oneNode : allNodesInDomain) 
+	            {
+	                temp = oneNode.getId();
+	                reply.add(temp);
+	                
+	                allPortsOnNode = oneNode.getPort();
+	                
+	                for (CtrlPlanePortContent onePort : allPortsOnNode) 
+	                {
+	                    temp = onePort.getId() + " " + onePort.getCapacity() + " " + onePort.getGranularity() + " " + onePort.getMinimumReservableCapacity() + " " + onePort.getMaximumReservableCapacity();
+	                    reply.add(temp);
+	                    
+	                    allLinksOnPort = onePort.getLink();
+	                    
+	                    if (allLinksOnPort != null) 
+	                    {
+	                        for (CtrlPlaneLinkContent oneLink : allLinksOnPort) 
+	                        {
+	                            CtrlPlaneSwcapContent swcap = oneLink.getSwitchingCapabilityDescriptors();
+	                            CtrlPlaneSwitchingCapabilitySpecificInfo swcapEsp = swcap.getSwitchingCapabilitySpecificInfo();
+	                            
+	                            temp = oneLink.getId() + " " + oneLink.getRemoteLinkId() + " " + oneLink.getCapacity() + " " + oneLink.getGranularity() + " " + oneLink.getMinimumReservableCapacity() + " " + oneLink.getMaximumReservableCapacity() + " " + swcapEsp.getVlanRangeAvailability();
+	                            reply.add(temp);
+	                        }
+	                    }
+	                }
+	            }
+	        }
+        
+	        reply.add(0,"");
+        }
+        catch (OSCARSFaultMessage fm) 
+        {
+            fm.printStackTrace();
+            message = fm.getMessage();
+            reply.add(0, "Error: Exception (" + message + ")");
+        }
+        catch (Exception e) 
+        {
+            e.printStackTrace();
+            message = e.getMessage();
+            reply.add(0, "Error: Exception (" + message + ")");
+        }
+
+        return reply;    	
+    }
     
-    //public ArrayList<String> getTopology(String oscars_url) {}				-----> NO LONGER SUPPORTED BY API in v0.6 -- NEEDS TO BE IMPLEMENTED FOR MEICAN TO OPERATE PROPERLY!!!!
+    
     //public ArrayList<String> refreshPath(String oscars_url, String gri){}		-----> NO LONGER SUPPORTED BY API in v0.6
     
 }

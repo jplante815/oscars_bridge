@@ -11,14 +11,13 @@ public class Main
         ArrayList<String> resultArray = new ArrayList<String>();
 
         String oscars_url = "http://localhost:9001/OSCARS";
+        String topoBridge_url = "http://localhost:9019/topoBridge";
         
         long myTime = (long)(System.currentTimeMillis() / 1000L);
 
-        //createReservation(String oscars_url, String description, String srcUrn, String isSrcTagged, String srcTag, String destUrn, String isDestTagged, String destTag, String path, int bandwidth, String pathSetupMode, long startTimestamp, long endTimestamp)
-
-        
         System.out.println("Connecting to OSCARS");
         test.buildBridge(oscars_url);
+        System.out.println("Connection successful.");
         
         /*
         // TEST createReservation() //
@@ -87,6 +86,12 @@ public class Main
         resultArray = test.queryReservation(griToModify);
         System.out.println(resultArray.toString()); 
         System.out.println("Query done!");
+        
+        System.out.println("==============");
+        System.out.println("Cancelling Reservation");					//Cancel the gri: INCANCEL
+        resultArray = test.cancelReservation(griToModify);
+        System.out.println(resultArray.toString()); 
+        System.out.println("Cancellation done!");
         */
         
         /*
@@ -165,9 +170,8 @@ public class Main
         System.out.println("==============");
         */
         
-
+        
         // TEST listAllReservations() //
-        System.out.println("Connection successful.");
         ArrayList<String> variousStatuses = new ArrayList<String>();
         variousStatuses.add("ACTIVE");
         variousStatuses.add("RESERVED");
@@ -187,6 +191,15 @@ public class Main
         }
         
         System.out.println("\n* TEST listAllReservations() done.");
+        
+        
+        /*
+        // TEST getTopology() //
+        System.out.println("Connection Successful, Getting Topology");
+        resultArray = test.getTopology(topoBridge_url, "testdomain-1");
+        System.out.println(resultArray.toString()); 
+        System.out.println("Topology gotten!");  
+        */
     }
 
 }

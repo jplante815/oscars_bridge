@@ -2,12 +2,12 @@
 <testng-results skipped="0" failed="0" total="1" passed="1">
   <reporter-output>
   </reporter-output>
-  <suite name="Command line suite" duration-ms="14931" started-at="2012-08-17T15:11:58Z" finished-at="2012-08-17T15:12:13Z">
+  <suite name="Command line suite" duration-ms="4761" started-at="2012-08-28T13:40:23Z" finished-at="2012-08-28T13:40:27Z">
     <groups>
     </groups>
-    <test name="Command line test" duration-ms="14931" started-at="2012-08-17T15:11:58Z" finished-at="2012-08-17T15:12:13Z">
+    <test name="Command line test" duration-ms="4761" started-at="2012-08-28T13:40:23Z" finished-at="2012-08-28T13:40:27Z">
       <class name="net.es.oscars.meican.test.BridgeClientTest">
-        <test-method status="PASS" signature="testBridge()[pri:0, instance:net.es.oscars.meican.test.BridgeClientTest@e949f69]" name="testBridge" duration-ms="14901" started-at="2012-08-17T15:11:58Z" finished-at="2012-08-17T15:12:13Z">
+        <test-method status="PASS" signature="testBridge()[pri:0, instance:net.es.oscars.meican.test.BridgeClientTest@e949f69]" name="testBridge" duration-ms="4749" started-at="2012-08-28T13:40:23Z" finished-at="2012-08-28T13:40:27Z">
         </test-method>
       </class>
     </test>

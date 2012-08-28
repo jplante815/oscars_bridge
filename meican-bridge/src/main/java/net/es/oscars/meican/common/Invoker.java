@@ -19,7 +19,7 @@ public class Invoker
 
 		Endpoint.publish(deployTarget, bridge);		// Deploy it at specified target location
 		
-		System.out.println("\n\nDeploying OSCARSBridgeV6 WebService at " + deployTarget);
-		System.out.println("In your browser, enter URL: " + deployTarget + "?wsdl to verify the service has been deployed.");
+		System.out.println("\n\n-----\nDeploying OSCARSBridgeV6 WebService at " + deployTarget);
+		System.out.println("In your browser, enter URL: " + deployTarget + "?wsdl to verify the service has been deployed.\n-----\n");
 	}
 }

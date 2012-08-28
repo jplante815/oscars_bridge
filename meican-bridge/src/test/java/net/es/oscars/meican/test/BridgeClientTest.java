@@ -5,8 +5,6 @@ import java.util.ArrayList;
 import javax.xml.ws.Endpoint;
 
 import net.es.oscars.meican.server.OSCARSBridgeWebService;
-import net.es.oscars.meican.soap.bridge.OSCARSBridge;
-import net.es.oscars.meican.soap.bridge.OSCARSBridgeProxy;
 import org.testng.annotations.Test;
 
 @Test
@@ -16,47 +14,46 @@ public class BridgeClientTest
 	@Test
 	public void testBridge() throws InterruptedException
 	{
-		String deployTarget = "http://localhost:8080/OSCARSBridgeV6";
+		String deployTarget = "http://localhost:8082/OSCARSBridgeV6";		// Where the Bridge will be deployed. MEICAN will need to know this location
 		
-        String oscarsUrl = "http://localhost:9001/OSCARS";   
-        String topoBridge_url = "http://localhost:9019/topoBridge";
+        String oscarsUrl = "http://localhost:9001/OSCARS";   				// Where to find the local instance of OSCARS
+        String topoBridge_url = "http://localhost:9019/topoBridge";			// Where to find the local instance of Topology bridge
 
 		OSCARSBridgeWebService bridgews = new OSCARSBridgeWebService();
-		bridgews.buildBridge(oscarsUrl);
-		Endpoint.publish(deployTarget, bridgews);		// Deploy it at specified target location
+		Endpoint.publish(deployTarget, bridgews);							// Deploy Bridge WS at specified target location
 			
-		
-		OSCARSBridgeProxy proxy = new OSCARSBridgeProxy();	// Connect to Bridge WebService, must first execute commands to parse OSCARSBridgeV6?wsdl
-		OSCARSBridge bridge = proxy.getOSCARSBridgePort();	 	// Instantiate an actual Bridge object
-
-		System.out.println("\nIntialization complete\n");
+		System.out.println("\n-- Testing Connection to OSCARS -- ");
+		bridgews.buildBridge(oscarsUrl);
+		System.out.println("-- Test Complete -- \n");
 
 		
+		System.out.println("-- Testing Connection to TopoBridge -- ");
+		ArrayList<String> theTopology = bridgews.getTopology(topoBridge_url, "testdomain-1");
+		if(theTopology.get(0).equals(""))		// No problems connecting to TopoBridge
+		{
+			System.out.println("Domain ID: " + theTopology.get(1));
+			System.out.println("URNs:");
+			for (String t : theTopology)
+			{
+				if(t.contains("link="))		// Just print the URNs for test purposes
+					System.out.println(t.substring(0, t.indexOf(" ")));
+			}
+		}
+		System.out.println("-- Test Complete -- \n");
+		
+		/*
         ArrayList<String> resultArray = new ArrayList<String>();
         long myTime = (long)(System.currentTimeMillis() / 1000L);
 
-        
-        System.out.println("Testing topology");
-        ArrayList<String> theTopology = bridgews.getTopology("http://127.0.0.1:9019/topoBridge", "es.net");
-        System.out.println("got topology");
-        
-        for (String t : theTopology)
-        {
-        	System.out.println(t);
-        }
-/*		
-
-        System.out.println("Testing Bridge -> OSCARS call");
-        System.out.println("==============");
-        
-        
+               
+        /*
 		// TEST createReservation() //
         System.out.println("Creating new Reservation");
 		resultArray = (ArrayList<String>)bridgews.createReservation("Reservation from BRIDGEv0.6", "urn:ogf:network:domain=testdomain-1:node=node-1-1:port=ge-1/1/0:link=*", "true", "any", "urn:ogf:network:domain=testdomain-1:node=node-1-2:port=ge-1/1/0:link=*", "true", "any", "null", 25, "timer-automatic", myTime+3600, myTime+3840);
 		System.out.println(resultArray.toString());
 		System.out.println("Creation done!");
 		System.out.println("==============");
-	*/	
+	
 		/*
 		// TEST queryReservation() //
 		System.out.println("Querying Reservation");
@@ -198,17 +195,5 @@ public class BridgeClientTest
         
         System.out.println("\n* TEST listAllReservations() done.");
         */
-		
-        
-        /*
-        // TEST getTopology() //
-        System.out.println("Connection Successful, Getting Topology");
-        resultArray = (ArrayList<String>)bridge.getTopology(topoBridge_url, "testdomain-1");
-        System.out.println(resultArray.toString()); 
-        System.out.println("Topology gotten!");  
-        */
-        
-        
-		System.out.println("\n------->>  Call Ended");
 	}
 }

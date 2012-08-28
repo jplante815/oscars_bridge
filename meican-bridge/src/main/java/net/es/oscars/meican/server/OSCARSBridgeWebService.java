@@ -50,14 +50,14 @@ public class OSCARSBridgeWebService
     	try
         {
     		//Set up keystores -- Will have to change this per system -- might be able to rewrite to accept this info from MEICAN admin
-    		OSCARSClientConfig.setClientKeystore("mykey", "/Users/jplante/Desktop/oscars_certs/client.jks", "changeit");
-    		OSCARSClientConfig.setSSLKeyStore("/Users/jplante/Desktop/oscars_certs/oscars-ssl.jks", "changeit");
+    		OSCARSClientConfig.setClientKeystore("mykey", "/Users/jplante/OSCARS_HOME/sampleDomain/certs/client.jks", "changeit");
+    		OSCARSClientConfig.setSSLKeyStore("/Users/jplante/OSCARS_HOME/sampleDomain/certs/client.jks", "changeit");
     		
-    		System.out.println("OSCARSURL in Build Bridge = " + oscarsUrl);
+    		System.out.println("* Building Bridge to: " + oscarsUrl);
     		
     		oscarsClient = new OSCARSClient(oscarsUrl, oscarsUrl + "?wsdl");	// Connect to OSCARS
             java.util.logging.Logger.getLogger("org.springframework.beans.factory").setLevel(java.util.logging.Level.INFO);
-            java.util.logging.Logger.getLogger("org.apache.cxf").setLevel(java.util.logging.Level.INFO);    		
+            java.util.logging.Logger.getLogger("org.apache.cxf").setLevel(java.util.logging.Level.INFO);
     		return true;
         }
         catch(OSCARSClientException ce) 
@@ -101,6 +101,8 @@ public class OSCARSBridgeWebService
     											@WebParam(name = "destTag")String destTag, @WebParam(name = "path")String path, @WebParam(name = "bandwidth")int bandwidth, @WebParam(name = "pathSetupMode")String pathSetupMode, 
     											@WebParam(name = "startTimestamp")long startTimestamp, @WebParam(name = "endTimestamp")long endTimestamp) 
     {       
+    	System.out.println("- Creating new Reservation");
+    	
         boolean hasEro = false;
        	
     	/**
@@ -237,7 +239,7 @@ public class OSCARSBridgeWebService
             gri = response.getGlobalReservationId();
             status = response.getStatus();
 
-            System.out.println("GRI: " + gri);
+            System.out.println("Reservation GRI: " + gri);
             System.out.println("Initial Status: " + status);
 
             reply.add(gri);
@@ -277,6 +279,8 @@ public class OSCARSBridgeWebService
     @WebMethod
     public @WebResult(name = "return")ArrayList<String> queryReservation(@WebParam(name = "gri")String gri) 
     {    	
+    	System.out.println("- Querying GRI: " + gri);
+    	
     	QueryResContent query = new QueryResContent();   	
     	query.setGlobalReservationId(gri);
     	
@@ -294,12 +298,19 @@ public class OSCARSBridgeWebService
         * ----- CtrlPlaneHopContent			-->	Domain, Node, Port, Link
         * ---- Layer2Info					-->	Src Endpoint, Dst Endpoint
         * ----- VlanTag						-->	VLAN value, IsTagged?
+        * -- UserRequestConstraintType		-->	Start Time, End Time, Bandwidth
+        * --- PathInfo						-->	Path Setup Mode, Path Type
+        * ---- CtrlPlanePathContent 		-->	List<Hops>
+        * ----- CtrlPlaneHopContent			-->	Domain, Node, Port, Link
+        * ---- Layer2Info					-->	Src Endpoint, Dst Endpoint
+        * ----- VlanTag						-->	VLAN value, IsTagged?
         * - OSCARSFaultReports				--> Error Code, Error Type, Error Message
         **/
          
         QueryResReply response;									//This is what comes back from OSCARS
-        ResDetails responseDetails;
+        ResDetails responseDetails = null;
         ReservedConstraintType reservedConstraints;
+        UserRequestConstraintType requestConstraints;
         PathInfo pathInfo;
         CtrlPlanePathContent path;
         Layer2Info layer2Info;
@@ -309,38 +320,39 @@ public class OSCARSBridgeWebService
         VlanTag destVtag;
         String destVlan = "null";
         Boolean isDstTagged = false;
+        String startTime;
+        String endTime;
+        String bandwidth;
         
         List<OSCARSFaultReport> oscarsFaults;
         
         try
         {
 	        response = oscarsClient.queryReservation(query);		// Submit queryReservation request to OSCARS and get response back
-	        
-	        oscarsFaults = response.getErrorReport();
-	        
-	        if(oscarsFaults != null)
-	        {
-	        	for(OSCARSFaultReport oneReport : oscarsFaults)
-	        	{
-	        		String faultyReply = oneReport.getErrorCode() + "\n" + oneReport.getErrorMsg() + "\nError Type: " + oneReport.getErrorType();
-	        			        		
-	        		reply.add(0, "Error: Exception (" + faultyReply + ")");
-	        		
-	        		return reply;
-	        	}
-	        }
-	        
+	        	        	        
 	        responseDetails = response.getReservationDetails();
-	        reservedConstraints = responseDetails.getReservedConstraint(); 
+	        System.out.println("Status = " + responseDetails.getStatus());
 	        
-	        if(reservedConstraints == null)
+	        reservedConstraints = responseDetails.getReservedConstraint();
+	        requestConstraints = responseDetails.getUserRequestConstraint();
+	        
+	        if(reservedConstraints == null)		 // Not Yet Reserved
 	        {
-	        	reply.add(0, "Error: No reservation matches that GRI");
+	        	startTime = String.valueOf(requestConstraints.getStartTime());
+	        	endTime = String.valueOf(requestConstraints.getEndTime());
+	        	bandwidth = String.valueOf(requestConstraints.getBandwidth());
 	        	
-	        	return reply;
+	        	pathInfo = requestConstraints.getPathInfo();
+	        }
+	        else								// Already Reserved
+	        {
+	        	startTime = String.valueOf(reservedConstraints.getStartTime());
+	        	endTime = String.valueOf(reservedConstraints.getEndTime());
+	        	bandwidth = String.valueOf(reservedConstraints.getBandwidth());
+	        	
+	        	pathInfo = reservedConstraints.getPathInfo();
 	        }
 	        
-	        pathInfo = reservedConstraints.getPathInfo();
 	        path = pathInfo.getPath();
 	        layer2Info = pathInfo.getLayer2Info();
 	
@@ -388,9 +400,9 @@ public class OSCARSBridgeWebService
 	        reply.add(responseDetails.getDescription());
 	        reply.add(responseDetails.getLogin());
 	        reply.add(String.valueOf(responseDetails.getCreateTime()));
-	        reply.add(String.valueOf(reservedConstraints.getStartTime()));
-	        reply.add(String.valueOf(reservedConstraints.getEndTime()));
-	        reply.add(String.valueOf(reservedConstraints.getBandwidth()));
+	        reply.add(startTime);
+	        reply.add(endTime);
+	        reply.add(bandwidth);
 	        reply.add(pathInfo.getPathSetupMode());
 	        reply.add(layer2Info.getSrcEndpoint());
 	        reply.add(isSrcTagged.toString());
@@ -433,6 +445,8 @@ public class OSCARSBridgeWebService
     @WebMethod
     public @WebResult(name = "return")ArrayList<String> cancelReservation(@WebParam(name = "gri")String gri) 
     {    	
+    	System.out.println("- Cancelling GRI: " + gri);
+    	
     	CancelResContent cancelRequest = new CancelResContent();   	
     	cancelRequest.setGlobalReservationId(gri);
     	
@@ -451,6 +465,8 @@ public class OSCARSBridgeWebService
         	cancelResponse = oscarsClient.cancelReservation(cancelRequest);		// Submit queryReservation request to OSCARS and get response back
         	status = cancelResponse.getStatus();
         
+        	System.out.println("Cancellation complete");
+        	
         	reply.add(gri);
         	reply.add(status);
         	reply.add(0, "");
@@ -495,10 +511,7 @@ public class OSCARSBridgeWebService
         
 
         for (int i = 0; i < gris.length; i++) 
-        {
-        	
-        	System.out.println("Querying GRI: " + gris[i]);
-        	
+        {        	
             String oneStatus = new String();
             
         	oneQueryResponse = queryReservation(gris[i]);	//Query each requested GRI individually

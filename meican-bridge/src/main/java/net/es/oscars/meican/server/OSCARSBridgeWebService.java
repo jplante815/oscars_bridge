@@ -50,8 +50,10 @@ public class OSCARSBridgeWebService
     	try
         {
     		//Set up keystores -- Will have to change this per system -- might be able to rewrite to accept this info from MEICAN admin
-    		OSCARSClientConfig.setClientKeystore("mykey", "/Users/jplante/OSCARS_HOME/sampleDomain/certs/client.jks", "changeit");
-    		OSCARSClientConfig.setSSLKeyStore("/Users/jplante/OSCARS_HOME/sampleDomain/certs/client.jks", "changeit");
+    		String OSCARS_HOME = System.getenv("OSCARS_HOME");
+    		
+    		OSCARSClientConfig.setClientKeystore("mykey", OSCARS_HOME + "/sampleDomain/certs/client.jks", "changeit");
+    		OSCARSClientConfig.setSSLKeyStore(OSCARS_HOME + "/sampleDomain/certs/client.jks", "changeit");
     		
     		System.out.println("* Building Bridge to: " + oscarsUrl);
     		

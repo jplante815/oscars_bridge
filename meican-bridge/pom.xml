@@ -8,7 +8,7 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <cxf.version>2.2.5</cxf.version>
         <java.version>1.6</java.version>
-        <build.rootdir>/Users/jplante/github/local/oscars_bridge/meican-bridge</build.rootdir>
+        <build.rootdir>${env.BRIDGE}</build.rootdir>
   </properties>
       <pluginRepositories>
         <pluginRepository>
